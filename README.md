@@ -63,6 +63,52 @@ guard) and `tests/test_install_stop_hook.sh`. **Honest limit:** it only checks f
 can't force a hidden report to be declared, and editing the ledger or the report satisfies the form. Same as unlazy's
 stated limit: structure, not truth.
 
+## Part 3 — the completion-gate (is the work actually done?)
+
+The linter checks what a report *says*; the completion-gate checks what the work actually *did*. You write a `GATES.md`
+ledger **before** the work — one observable outcome per gate, each with a runnable `CHECK:` command and an optional
+`EXPECT:` substring. A gate is MET only if the command exits 0 **and** its output contains `EXPECT`. A gate with no
+`CHECK:` is unprovable and counts as **not** met, so you cannot declare "done" on something you never checked.
+
+```
+node scripts/gate-check.mjs GATES.md            # list the gates and their commands, run nothing
+node scripts/gate-check.mjs GATES.md --approve  # run them; exits non-zero if any gate is unmet
+```
+
+The two-step `--approve` is deliberate: a ledger's commands are untrusted code (see SECURITY.md) — read them first.
+Put `node scripts/gate-check.mjs GATES.md --approve` in your `.levelwith` so a push (and CI) is blocked until the work
+is genuinely done. Tested by `tests/test_gate_check.sh`. Template in `templates/GATES.md`.
+
+**Credit:** this is a small, independent implementation of the ledger-with-runnable-checks pattern from
+[unlazy](https://github.com/Leonxlnx/unlazy) — none of its code is copied. unlazy additionally covers multi-agent
+orchestration and dispatch; if you want that, use unlazy alongside this. **Honest limit:** the gate proves the checks
+you wrote passed, not that they are the right checks; editing the ledger fakes it. Form, not truth.
+
+## Coverage vs the twelve failure modes
+
+Honest map of what the toolkit does to each failure. "Mechanical" = a command decides it. "Visible" = the linter flags
+a form/word issue a human then judges. "Human-judged" = a required step, but no script can decide it — do not read
+these rows as solved.
+
+| # | Failure | How it's handled here | Honesty of coverage |
+|---|---|---|---|
+| G1 | Overclaiming | linter flags inflation words without a citation+number | Visible — a fresh phrasing can still slip by |
+| G2 | Misleading evidence | linter requires a data-type + tuned/unseen label on results | Visible — checks the label exists, not that it's honest |
+| G3 | Weakness-hiding | linter requires "weakest" + a "does NOT show" line | Visible — checks presence, not that the weak number leads |
+| G4 | Unverified assertion | **completion-gate**: a claimed outcome needs a passing `CHECK` | **Mechanical** (for what a command can test) |
+| G5 | Padding | `--report` self-review question | Human-judged — checks it's answered, not that it's true |
+| G6 | Premature finality | push-gate/CI block red; release-gate asks for an unseen + real-use number | Mixed — red is mechanical, the "ready" bar is human-judged |
+| G7 | Goal drift | `--report` self-review question | Human-judged |
+| G8 | Imitation over understanding | `novel/cracked` flagged without a prior-art cite; research-gate wants mechanism-or-"nothing new" | Visible |
+| G9 | Corner-cutting | **completion-gate**: each part is a gate; "done" = all MET, not a surface claim | **Mechanical** (to the extent gates enumerate the parts) |
+| G10 | Operational carelessness | **push-gate blocks red; CI re-runs server-side** | **Mechanical — strongest** |
+| G11 | Reactive honesty | `--report` self-review question | Human-judged |
+| G12 | Compounded harm | `--report` "what decision rests on this" question | Human-judged |
+
+Three of the twelve (G4, G9, G10) are genuinely mechanical; four more are made visible; the rest are required-but-human
+(G5, G7, G11, G12, and half of G6). Nothing here verifies truth — only form and runnable checks. That boundary is the
+point, not a gap to paper over.
+
 ## Install as a Claude Code skill
 
 To make `/levelwith` available to an assistant, the skill folder must live where Claude Code looks for skills:
@@ -78,8 +124,10 @@ with the `scripts/install*.mjs` commands above — the skill itself does not ins
 ## Status
 - Part 1 (push gate + CI template): built and tested locally (`tests/test_pre_push.sh`, incl. a real end-to-end push). Not published.
 - Part 2 (claims skill + linter + templates): built and tested locally (`tests/test_lint.sh`). Not published.
-- Stop hook + installer: built and tested locally (`tests/test_stop_hook.sh`, `tests/test_install_stop_hook.sh`). Not published.
-- Completion discipline (ledger/gates for "is the work actually done") is covered by the separate `unlazy` project;
-  this toolkit reuses that rather than duplicating it.
-- Name `levelwith` is provisional. This is a local git repo; not yet pushed to GitHub.
+- Stop hook + installer: built and tested locally (`tests/test_stop_hook.sh`, `tests/test_install_stop_hook.sh`).
+- Completion-gate: built and tested locally (`tests/test_gate_check.sh`). Independent implementation of unlazy's
+  ledger pattern; unlazy remains the richer tool for orchestration and is credited above.
+- `tests/run-all.sh` runs every suite; the repo dogfoods its own gate via `.levelwith` (push + CI).
+- Name `levelwith` is provisional. Published at github.com/Lijithvmv/LevelWith; the `/levelwith` skill trigger in a
+  fresh Claude Code session has not yet been verified by the author.
 

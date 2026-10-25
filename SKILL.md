@@ -32,7 +32,8 @@ Emit a result block (template `templates/report.md`) with, in this order:
 2. **data type**: real-use / replay / tuned-on / held-out|unseen / synthetic / self-made, with n;
 3. what the number **does NOT show**.
 Re-measure every number at the moment of writing; do not quote a remembered figure. Then run the gate:
-`node scripts/levelwith-lint.mjs <file>` must exit 0.
+`node scripts/levelwith-lint.mjs <file>` must exit 0. Answer the self-review block (padding / goal / proactive
+disclosure / what decision rests on this); `--report` checks each is answered — these are the failures no script judges.
 
 ### release — "ready" / "mature" / publish / tag
 Blocked unless: at least one **unseen** (not tuned-on) number exists; a **real-use** measurement
@@ -44,10 +45,17 @@ End with either **"what was cracked"** (the new method/gap + its evidence + a pr
 explicit **"nothing new"**. Reproducing a known method's name without its mechanism is a fail. A
 prior-art check is done before claiming novelty, not after. (Template: `templates/research.md`.) <!-- levelwith-allow -->
 
+### done — "complete" / "it works" / "all passing"
+Do not claim done from a confident report. Write a `GATES.md` (template `templates/GATES.md`) — one observable
+outcome per gate with a runnable `CHECK:` — and run `node scripts/gate-check.mjs GATES.md --approve`. "Done" means
+every gate MET (exit 0 + EXPECT match); a gate with no CHECK is unprovable and counts as not met. This is the only
+part that tests work rather than words (covers "unverified" and "corner-cut" for what a command can decide).
+
 ## The gate (mechanical part)
 `scripts/levelwith-lint.mjs <file>` flags inflation words lacking a citation+number and a results file
-missing the honesty block; it exits non-zero so it can be a `.levelwith` check or a Stop-hook gate. Its
-limit, stated in its own output: the check is lexical; it cannot tell if the content is true.
+missing the honesty block; `scripts/gate-check.mjs GATES.md --approve` proves declared outcomes actually passed. Both
+exit non-zero so they can be a `.levelwith` check, a Stop-hook gate, or CI. Their limit, stated in their own output:
+the lint is lexical and the gate only proves the checks you wrote — neither can tell if the content is true.
 
 To make it *block* rather than advise, install the Stop hook (`node scripts/install-stop-hook.mjs`, opt-in,
 consent-only) and list the report files to enforce in `.levelwith/claims`. See README and SECURITY.md.

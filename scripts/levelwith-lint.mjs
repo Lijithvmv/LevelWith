@@ -52,6 +52,19 @@ if (forceReport || RESULTY.test(text)) {
   for (const [re, label] of need) if (!re.test(text)) violations.push(`report is missing: ${label}`);
 }
 
+// --report only: the four human-judgment questions (G5/G7/G11/G12) must be present AND answered.
+// This checks the answer is non-empty, NOT that it is honest — those failures no script can judge.
+if (forceReport) {
+  const review = [["padding", /padding/i], ["goal", /\bgoal\b/i],
+    ["proactive disclosure", /proactiv/i], ["decision", /decision/i]];
+  for (const [name, re] of review) {
+    const hit = lines.find((l) => re.test(l) && /\?/.test(l));
+    if (!hit) { violations.push(`self-review missing: the "${name}" question`); continue; }
+    const tail = hit.replace(/.*\?/, "").trim();
+    if (!tail || /^<.*>$/.test(tail)) violations.push(`self-review not answered: the "${name}" question`);
+  }
+}
+
 if (violations.length) {
   console.error(`levelwith-lint: ${violations.length} issue(s) in ${file}:`);
   for (const v of violations) console.error("  - " + v);
