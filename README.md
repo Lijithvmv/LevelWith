@@ -49,9 +49,10 @@ visible in the diff). Templates are in `templates/`. Same honest limit as Part 1
 ### The Stop hook (enforce, not just advise)
 
 `SKILL.md` and the linter *advise*; a Claude Code **Stop hook** makes the linter *block*. List the report files to
-enforce in `.levelwith/claims` (one path per line); when the assistant tries to end its turn, the hook runs the linter
+enforce in `.levelwith-claims` (one path per line); when the assistant tries to end its turn, the hook runs the linter
 on each and blocks the stop while any fails, feeding back what to fix. A progress guard releases after 5 consecutive
-blocks so it can never wedge a session. It is **opt-in**: with no `.levelwith/claims`, the hook does nothing.
+blocks so it can never wedge a session. It is **opt-in**: with no `.levelwith-claims`, the hook does nothing. (The
+ledger is a separate file from the push-gate's `.levelwith` file, so a project can use both at once.)
 
 ```
 node scripts/install-stop-hook.mjs                 # print the settings.json snippet to paste
@@ -121,6 +122,24 @@ Then start a new session and type `/levelwith`, or let it trigger from its descr
 result, release, or research conclusion. The push gate (Part 1) and the Stop hook are installed separately, per repo,
 with the `scripts/install*.mjs` commands above — the skill itself does not install hooks without you running those.
 
+### Using the tools inside another project (portability)
+
+The scripts live in the skill folder, not in your project. They all take the target file as an argument and read it
+relative to your project's directory, so invoke them by their skill path from your project root:
+
+```
+node ~/.claude/skills/levelwith/scripts/levelwith-lint.mjs REPORT.md
+node ~/.claude/skills/levelwith/scripts/gate-check.mjs GATES.md --approve
+```
+
+So in another project: the Stop-hook installer already writes the skill's absolute path into `.claude/settings.json`
+(cross-project by design); your project's `.levelwith` should list **your** checks (e.g. `pytest -q`) plus, if you
+want the honesty linter enforced on a report, the full skill-path command above; `.levelwith-claims` lists the report
+files for the Stop hook. This was verified by installing both into a separate repo and firing them (block on a
+dishonest report, allow on an honest one). The one mode that needs machine-independent paths — a committed `.levelwith`
+shared with teammates or CI — should instead vendor the skill project-level (`.claude/skills/levelwith`) so a repo-
+relative path works for everyone.
+
 ## Status
 - Part 1 (push gate + CI template): built and tested locally (`tests/test_pre_push.sh`, incl. a real end-to-end push). Not published.
 - Part 2 (claims skill + linter + templates): built and tested locally (`tests/test_lint.sh`). Not published.
@@ -128,6 +147,9 @@ with the `scripts/install*.mjs` commands above — the skill itself does not ins
 - Completion-gate: built and tested locally (`tests/test_gate_check.sh`). Independent implementation of unlazy's
   ledger pattern; unlazy remains the richer tool for orchestration and is credited above.
 - `tests/run-all.sh` runs every suite; the repo dogfoods its own gate via `.levelwith` (push + CI).
-- Name `levelwith` is provisional. Published at github.com/Lijithvmv/LevelWith; the `/levelwith` skill trigger in a
-  fresh Claude Code session has not yet been verified by the author.
+- Cross-project use verified: the push gate and Stop hook were installed into a separate repo and fired correctly
+  (block on a dishonest report, allow on an honest one), using the skill-folder scripts — nothing in the test project.
+- Skill discovery: `levelwith` is indexed by Claude Code (it appears in a session's skill list after install). The
+  interactive `/levelwith` invocation is best confirmed by the user in their own fresh session.
+- Name `levelwith` is provisional. Published at github.com/Lijithvmv/LevelWith.
 

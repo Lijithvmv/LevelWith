@@ -15,17 +15,22 @@ t=$(mktemp -d)
 echo "ok: no ledger allows the stop"
 
 # declared bad report -> block
-t=$(mktemp -d); mkdir "$t/.levelwith"; cp "$REPO/tests/fixtures/bad.md" "$t/report.md"; echo "report.md" > "$t/.levelwith/claims"
+t=$(mktemp -d); cp "$REPO/tests/fixtures/bad.md" "$t/report.md"; echo "report.md" > "$t/.levelwith-claims"
 out=$(run "$t"); echo "$out" | grep -q '"decision":"block"' || { echo "FAIL: bad report did not block"; exit 1; }
 echo "ok: a failing declared report blocks the stop"
 
 # declared good report -> allow
-t=$(mktemp -d); mkdir "$t/.levelwith"; cp "$REPO/tests/fixtures/good.md" "$t/report.md"; echo "report.md" > "$t/.levelwith/claims"
+t=$(mktemp -d); cp "$REPO/tests/fixtures/good.md" "$t/report.md"; echo "report.md" > "$t/.levelwith-claims"
 [ -z "$(run "$t")" ] || { echo "FAIL: good report should allow"; exit 1; }
 echo "ok: a passing declared report allows the stop"
 
+# push-gate file and stop-hook ledger coexist (one is a file, the other is a separate file)
+t=$(mktemp -d); cp "$REPO/tests/fixtures/good.md" "$t/report.md"; echo "report.md" > "$t/.levelwith-claims"; echo "echo ok" > "$t/.levelwith"
+[ -z "$(run "$t")" ] || { echo "FAIL: ledger + push-gate config should coexist"; exit 1; }
+echo "ok: .levelwith (push gate) and .levelwith-claims (stop hook) coexist"
+
 # progress guard: 6th consecutive block with a bad report releases
-t=$(mktemp -d); mkdir "$t/.levelwith"; cp "$REPO/tests/fixtures/bad.md" "$t/report.md"; echo "report.md" > "$t/.levelwith/claims"
+t=$(mktemp -d); cp "$REPO/tests/fixtures/bad.md" "$t/report.md"; echo "report.md" > "$t/.levelwith-claims"
 i=1; released=0
 while [ $i -le 6 ]; do
   out=$(run "$t" 2>/dev/null)

@@ -21,7 +21,7 @@ const writeAt = args.indexOf("--write");
 if (writeAt === -1) {
   console.log("levelwith Stop hook — add this to your project's .claude/settings.json:\n");
   console.log(JSON.stringify({ hooks: { Stop: [entry] } }, null, 2));
-  console.log(`\nThen list the report files to enforce in .levelwith/claims (one path per line).`);
+  console.log(`\nThen list the report files to enforce in .levelwith-claims (one path per line).`);
   console.log(`To write it for a project automatically:  node scripts/install-stop-hook.mjs --write <project-dir>`);
   process.exit(0);
 }
@@ -46,4 +46,4 @@ settings.hooks.Stop.push(entry);
 mkdirSync(settingsDir, { recursive: true });
 writeFileSync(settingsFile, JSON.stringify(settings, null, 2) + "\n");
 console.log(`levelwith Stop hook written to ${settingsFile}`);
-console.log(`List the report files to enforce in ${join(resolve(dir), ".levelwith", "claims")} (one path per line).`);
+console.log(`List the report files to enforce in ${join(resolve(dir), ".levelwith-claims")} (one path per line).`);
