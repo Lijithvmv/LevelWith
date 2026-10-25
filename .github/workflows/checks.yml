@@ -1,0 +1,22 @@
+name: levelwith-checks
+# Runs the same `.levelwith` checks server-side, so the gate holds even if someone
+# pushes with --no-verify (which skips the local hook). Add your project's setup
+# steps (language, dependencies) before the "Run checks" step.
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # - add setup here, e.g. actions/setup-python, pip install -e ".[dev]"
+      - name: Run declared .levelwith checks
+        run: |
+          if [ ! -f .levelwith ]; then echo "no .levelwith file; nothing to check"; exit 0; fi
+          fail=0
+          while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in ''|\#*) continue ;; esac
+            echo "::group::$line"
+            sh -c "$line" || fail=1
+            echo "::endgroup::"
+          done < .levelwith
+          exit $fail

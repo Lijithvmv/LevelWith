@@ -1,0 +1,6 @@
+# Copy to `.levelwith` at your repo root. One check command per line; each must exit 0
+# before a push is allowed. Blank lines and # comments are ignored.
+# Examples (uncomment and edit for your project):
+# pytest -q
+# ruff check .
+# npm test --silent

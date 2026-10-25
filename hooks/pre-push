@@ -1,0 +1,32 @@
+#!/bin/sh
+# levelwith pre-push gate: block a push when a declared check fails.
+#
+# Config: a file named `.levelwith` at the repo root, one shell command per line
+# (blank lines and lines starting with # are ignored). Every command must exit 0.
+# Honest bypass when you mean it:  git push --no-verify
+#
+# What this does: runs the checks you declared and stops the push if any fails.
+# What it does NOT do: it cannot tell whether your checks are the right ones, and
+# --no-verify skips it. It is a discipline aid, not a security control.
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+cfg="$root/.levelwith"
+[ -f "$cfg" ] || { echo "levelwith: no .levelwith config found; nothing to check."; exit 0; }
+
+fail=0
+while IFS= read -r line || [ -n "$line" ]; do
+  case "$line" in ''|\#*) continue ;; esac
+  echo "levelwith: running check -> $line"
+  if ! ( cd "$root" && sh -c "$line" ); then
+    echo "levelwith: CHECK FAILED -> $line"
+    fail=1
+  fi
+done < "$cfg"
+
+if [ "$fail" -ne 0 ]; then
+  echo "levelwith: push BLOCKED — a declared check failed."
+  echo "levelwith: fix it, or bypass honestly with: git push --no-verify"
+  exit 1
+fi
+echo "levelwith: all declared checks passed."
+exit 0
