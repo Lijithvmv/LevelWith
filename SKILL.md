@@ -49,6 +49,9 @@ prior-art check is done before claiming novelty, not after. (Template: `template
 missing the honesty block; it exits non-zero so it can be a `.levelwith` check or a Stop-hook gate. Its
 limit, stated in its own output: the check is lexical; it cannot tell if the content is true.
 
+To make it *block* rather than advise, install the Stop hook (`node scripts/install-stop-hook.mjs`, opt-in,
+consent-only) and list the report files to enforce in `.levelwith/claims`. See README and SECURITY.md.
+
 ## Honest limits
 - Lexical, not semantic: right-shaped lies pass; obscure phrasings of inflation may slip by.
 - Anyone who can edit the report can satisfy the form without the substance.

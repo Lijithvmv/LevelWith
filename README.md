@@ -46,9 +46,39 @@ unless a citation and a number are on the same line, and flags a results file mi
 non-zero so it can be a `.levelwith` gate. Fenced code and lines marked `levelwith-allow` are exempt (the exemption is
 visible in the diff). Templates are in `templates/`. Same honest limit as Part 1: it checks form and words, not truth.
 
+### The Stop hook (enforce, not just advise)
+
+`SKILL.md` and the linter *advise*; a Claude Code **Stop hook** makes the linter *block*. List the report files to
+enforce in `.levelwith/claims` (one path per line); when the assistant tries to end its turn, the hook runs the linter
+on each and blocks the stop while any fails, feeding back what to fix. A progress guard releases after 5 consecutive
+blocks so it can never wedge a session. It is **opt-in**: with no `.levelwith/claims`, the hook does nothing.
+
+```
+node scripts/install-stop-hook.mjs                 # print the settings.json snippet to paste
+node scripts/install-stop-hook.mjs --write <dir>   # merge it into <dir>/.claude/settings.json (appends; idempotent)
+```
+
+Tested by `tests/test_stop_hook.sh` (blocks on a failing declared report, allows on a passing one, releases after the
+guard) and `tests/test_install_stop_hook.sh`. **Honest limit:** it only checks files you declare in the ledger — it
+can't force a hidden report to be declared, and editing the ledger or the report satisfies the form. Same as unlazy's
+stated limit: structure, not truth.
+
+## Install as a Claude Code skill
+
+To make `/levelwith` available to an assistant, the skill folder must live where Claude Code looks for skills:
+
+- **User-level (all your projects):** copy or symlink this repo to `~/.claude/skills/levelwith` (on Windows,
+  `%USERPROFILE%\.claude\skills\levelwith`; a directory junction works too). `SKILL.md` must be at that folder's root.
+- **Project-level (one repo):** copy or symlink it to that repo's `.claude/skills/levelwith`.
+
+Then start a new session and type `/levelwith`, or let it trigger from its description when you produce a report,
+result, release, or research conclusion. The push gate (Part 1) and the Stop hook are installed separately, per repo,
+with the `scripts/install*.mjs` commands above — the skill itself does not install hooks without you running those.
+
 ## Status
 - Part 1 (push gate + CI template): built and tested locally (`tests/test_pre_push.sh`, incl. a real end-to-end push). Not published.
 - Part 2 (claims skill + linter + templates): built and tested locally (`tests/test_lint.sh`). Not published.
+- Stop hook + installer: built and tested locally (`tests/test_stop_hook.sh`, `tests/test_install_stop_hook.sh`). Not published.
 - Completion discipline (ledger/gates for "is the work actually done") is covered by the separate `unlazy` project;
   this toolkit reuses that rather than duplicating it.
 - Name `levelwith` is provisional. This is a local git repo; not yet pushed to GitHub.

@@ -1,0 +1,9 @@
+# levelwith dogfoods its own gate: these must pass before a push and in CI.
+# (cygpath in the test scripts is Windows-only; on Linux/CI it falls back cleanly.)
+sh tests/test_pre_push.sh
+sh tests/test_lint.sh
+sh tests/test_stop_hook.sh
+sh tests/test_install_stop_hook.sh
+node scripts/levelwith-lint.mjs README.md
+node scripts/levelwith-lint.mjs SECURITY.md
+node scripts/levelwith-lint.mjs SKILL.md
