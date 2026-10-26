@@ -15,7 +15,11 @@ const WORD_TERMS = ["novel", "novelty", "cracked", "breakthrough", "revolutionar
 const PHRASE_TERMS = ["world-first", "world first", "first-ever", "first ever", "game-changer",
   "game changer", "best-in-class", "best in class", "best in the market", "state-of-the-art",
   "state of the art", "production-grade", "production grade", "nobody else", "no one else"];
+// "best" on its own, minus the everyday idioms that make no claim (and the best-in-class phrase above).
+const BEST = /(?<!\bat )\bbest\b(?![- ](practices?|effort|in[- ]class|in the market))/i;
 const CITE = /(https?:\/\/|arxiv|\[\d+\]|\bcite:|\bprior[ -]art\b)/i;
+// The number must be a measurement, not the citation itself: "[1]" or a URL's digits don't count.
+const CITE_TOKENS = /https?:\/\/\S+|\[\d+\]|arxiv:?\s*[\d.v]+/gi;
 const NUM = /\d/;
 const RESULTY = /(recall|precision|accuracy|\bf1\b|%|\bstopped\b|\bheld\b|benchmark|results?\b|attack)/i;
 
@@ -32,8 +36,9 @@ lines.forEach((line, i) => {
   if (inFence) return;
   if (/levelwith-allow/.test(line)) return;                      // explicit, visible exemption
   const low = line.toLowerCase();
-  const justified = CITE.test(line) && NUM.test(line);
+  const justified = CITE.test(line) && NUM.test(line.replace(CITE_TOKENS, ""));
   if (justified) return;
+  if (BEST.test(line)) violations.push(`line ${i + 1}: inflation word "best" without a citation + number on the line`);
   for (const t of WORD_TERMS) {
     if (new RegExp(`\\b${t}\\b`, "i").test(line)) violations.push(`line ${i + 1}: inflation word "${t}" without a citation + number on the line`);
   }

@@ -51,7 +51,7 @@ visible in the diff). Templates are in `templates/`. Same honest limit as Part 1
 `SKILL.md` and the linter *advise*; a Claude Code **Stop hook** makes the linter *block*. List the report files to
 enforce in `.levelwith-claims` (one path per line); when the assistant tries to end its turn, the hook runs the linter
 on each and blocks the stop while any fails, feeding back what to fix. A progress guard releases after 5 consecutive
-blocks so it can never wedge a session. It is **opt-in**: with no `.levelwith-claims`, the hook does nothing. (The
+blocks so it can never wedge a session, then re-arms. It is **opt-in**: with no `.levelwith-claims`, the hook does nothing. (The
 ledger is a separate file from the push-gate's `.levelwith` file, so a project can use both at once.)
 
 ```
@@ -150,6 +150,6 @@ relative path works for everyone.
 - Cross-project use verified: the push gate and Stop hook were installed into a separate repo and fired correctly
   (block on a dishonest report, allow on an honest one), using the skill-folder scripts — nothing in the test project.
 - Skill discovery: `levelwith` is indexed by Claude Code (it appears in a session's skill list after install). The
-  interactive `/levelwith` invocation is best confirmed by the user in their own fresh session.
+  interactive `/levelwith` invocation should be confirmed by the user in their own fresh session.
 - Name `levelwith` is provisional. Published at github.com/Lijithvmv/LevelWith.
 

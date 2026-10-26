@@ -13,6 +13,20 @@ if ! node scripts/levelwith-lint.mjs tests/fixtures/good.md >/dev/null 2>&1; the
 fi
 echo "ok: honest file passes"
 
+# lint one line; succeed if the linter's exit status matches the expectation (0 = pass, 1 = flagged)
+lint_line() { t=$(mktemp); printf '%s\n' "$2" > "$t"; s=0; node scripts/levelwith-lint.mjs "$t" >/dev/null 2>&1 || s=$?; [ "$s" = "$1" ]; }
+
+# a fake footnote is not a measured number: "[1]" must not satisfy citation AND number at once
+lint_line 1 "This is a novel approach [1]." || { echo "FAIL: '[1]' alone justified an inflation word"; exit 1; }
+lint_line 1 "A breakthrough, see https://arxiv.org/abs/2503.18813" || { echo "FAIL: a URL's digits justified an inflation word"; exit 1; }
+lint_line 0 "Novel only in combination [1]; 12 prior systems compared." || { echo "FAIL: citation + real number was flagged"; exit 1; }
+echo "ok: a citation's own digits do not count as the number"
+
+# "best" is flagged on its own (README/SKILL promise it), but everyday idioms are not
+lint_line 1 "This is the best detector available." || { echo "FAIL: bare 'best' was not flagged"; exit 1; }
+lint_line 0 "Follow best practices; this is best-effort and at best partial." || { echo "FAIL: 'best' idioms were flagged"; exit 1; }
+echo "ok: bare 'best' is flagged, idioms are not"
+
 # --report mode: the self-review questions must be present AND answered
 body="# R
 Weakest first: recall 0.23 (data type: unseen, n=10). What this does NOT show: not adaptive."

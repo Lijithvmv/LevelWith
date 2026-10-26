@@ -8,13 +8,15 @@
 // both without one being a file and the other a directory.)
 //
 // Progress guard: after MAX_BLOCKS consecutive blocks it releases the stop (so it can never wedge a
-// session), printing a note to stderr.
+// session), printing a note to stderr, then re-arms so the following stop is checked again.
 //
 // Honest limit: it only checks the files you declare in the ledger. It cannot force a hidden report
 // to be declared, and anyone who edits the ledger or the report can satisfy the form. The human is
 // the backstop; this makes a failing declared report catchable before the agent stops.
-import { readFileSync, existsSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,7 +29,12 @@ try { event = JSON.parse(raw || "{}"); } catch { /* not JSON */ }
 const cwd = event.cwd || process.cwd();
 
 const ledger = join(cwd, ".levelwith-claims");
-const counterFile = join(cwd, ".levelwith-stopcount");
+// The block counter lives in the OS temp dir, keyed by session (or cwd), so the hook never writes
+// a stray file into the user's project and one session's count cannot leak into the next.
+const counterDir = join(tmpdir(), "levelwith");
+const counterKey = createHash("sha1").update(event.session_id || resolve(cwd)).digest("hex").slice(0, 16);
+const counterFile = join(counterDir, `stopcount-${counterKey}`);
+const saveCount = (n) => { try { mkdirSync(counterDir, { recursive: true }); writeFileSync(counterFile, String(n)); } catch { /* ignore */ } };
 
 const allow = () => process.exit(0); // no stdout = allow the stop
 
@@ -50,18 +57,17 @@ for (const f of files) {
 let count = 0;
 try { count = parseInt(readFileSync(counterFile, "utf8"), 10) || 0; } catch { /* none */ }
 
-if (!failures.length) {
-  try { writeFileSync(counterFile, "0"); } catch { /* ignore */ }
-  allow();
-}
+if (!failures.length) { saveCount(0); allow(); }
 
 count += 1;
-try { writeFileSync(counterFile, String(count)); } catch { /* ignore */ }
-
 if (count > MAX_BLOCKS) {
+  // Release this one stop, then re-arm: the next stop starts a fresh cycle and blocks again, so a
+  // release is a one-time escape hatch, not a permanent off switch.
+  saveCount(0);
   process.stderr.write(`levelwith: released after ${MAX_BLOCKS} blocks; ${failures.length} declared report(s) still fail the honesty check — fix them by hand.\n`);
   allow();
 }
+saveCount(count);
 
 process.stdout.write(JSON.stringify({
   decision: "block",

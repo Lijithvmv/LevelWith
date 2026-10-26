@@ -40,4 +40,13 @@ done
 [ "$released" = 1 ] || { echo "FAIL: progress guard did not release after MAX_BLOCKS"; exit 1; }
 echo "ok: progress guard releases after MAX_BLOCKS (block $i)"
 
+# after a release the guard re-arms: the very next stop on the still-bad report blocks again
+out=$(run "$t" 2>/dev/null); echo "$out" | grep -q '"decision":"block"' || { echo "FAIL: guard stayed released after one release"; exit 1; }
+echo "ok: guard re-arms after a release (next stop blocks again)"
+
+# the hook leaves nothing behind in the project: only the two files this test created
+left=$(ls -A "$t" | sort | tr '\n' ' ')
+[ "$left" = ".levelwith-claims report.md " ] || { echo "FAIL: hook wrote into the project dir: $left"; exit 1; }
+echo "ok: hook writes no state file into the project"
+
 echo "ALL PASS"
