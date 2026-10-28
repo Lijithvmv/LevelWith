@@ -4,12 +4,16 @@ levelwith is a local discipline aid, not a security control. This file states wh
 against, so nobody relies on it for something it was never built to do.
 
 ## What it is
-- Four dependency-free tools run by Node and POSIX `sh`: a git `pre-push` hook, a lexical linter, a Claude Code Stop
-  hook, and a completion-gate (`gate-check.mjs`), plus installers for the two hooks.
+- Five dependency-free tools run by Node and POSIX `sh`: a git `pre-push` hook, a lexical linter, a Claude Code Stop
+  hook, a response-guard (a second Stop hook that lints the assistant's own last reply), and a completion-gate
+  (`gate-check.mjs`), plus installers for the hooks.
 - No network calls, no telemetry, no data egress, no third-party dependencies. It reads and writes only files under the
-  repo/session directory you point it at (the `.levelwith` config, the `.levelwith-claims` ledger, `.claude/settings.json`,
-  and the `.git/hooks/pre-push` it installs), plus one small block-counter file per session under the OS temp directory
-  (`<tmp>/levelwith/stopcount-*`), so nothing is written into your project.
+  repo/session directory you point it at (the `.levelwith` config, the `.levelwith-claims` ledger, the `.levelwith-guard`
+  opt-in flag, `.claude/settings.json`, and the `.git/hooks/pre-push` it installs), plus small per-session block-counter
+  files under the OS temp directory (`<tmp>/levelwith/stopcount-*`, `guardcount-*`), so nothing stray is written into
+  your project.
+- The response-guard additionally **reads the local session transcript file** the harness names on stdin, to inspect
+  the assistant's own last reply. It reads it locally and sends nothing anywhere; it never writes to it.
 
 ## What it protects against
 - An assistant (or a person) *silently* shipping a push on red: the pre-push hook and CI template block it.

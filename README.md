@@ -85,6 +85,27 @@ is genuinely done. Tested by `tests/test_gate_check.sh`. Template in `templates/
 orchestration and dispatch; if you want that, use unlazy alongside this. **Honest limit:** the gate proves the checks
 you wrote passed, not that they are the right checks; editing the ledger fakes it. Form, not truth.
 
+## Part 4 — the response-guard (watches the chat reply, not just files)
+
+The push gate, linter, and completion-gate all watch **files and pushes**. But the overclaiming that does
+the real damage usually arrives as a **confident message in chat** — never written to a file anyone declared. The
+response-guard is a Claude Code Stop hook that closes that gap: before the assistant can end a turn, it reads the
+assistant's own last reply from the session transcript, and if that reply *reports results* (metrics/numbers as
+findings) but carries an unbacked inflation word or is missing the honesty block, the harness **blocks the turn** and
+feeds back what to fix. It is caught at the moment it would reach you, with nobody monitoring.
+
+```
+node scripts/install-stop-hook.mjs --guard                 # print the settings.json snippet
+node scripts/install-stop-hook.mjs --guard --write <dir>   # wire it into <dir>/.claude/settings.json
+```
+
+Turn it on by creating an empty `.levelwith-guard` file in the project (opt-in). Tested by
+`tests/test_response_guard.sh`. **Scope and honest limits:** it only acts on replies that look like
+results-reporting — a deliberately narrow trigger so ordinary chat is not drowned in false positives, which also means
+a result stated without a trigger word slips by. It is lexical (a right-shaped claim still passes), sees only text
+written to the transcript, runs entirely locally (it reads the local transcript file; nothing is sent anywhere), and
+is bypassable. It makes the common overclaim catchable automatically; it does not verify truth.
+
 ## Coverage vs the twelve failure modes
 
 Honest map of what the toolkit does to each failure. "Mechanical" = a command decides it. "Visible" = the linter flags

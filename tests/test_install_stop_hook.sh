@@ -27,4 +27,14 @@ n=$(grep -o "stop-hook.mjs" "$t/.claude/settings.json" | wc -l | tr -d ' ')
 [ "$n" = "1" ] || { echo "FAIL: duplicated the hook ($n copies)"; exit 1; }
 echo "ok: idempotent (one copy after two runs)"
 
+# --guard wires response-guard.mjs, and coexists with the default stop hook
+t=$(mktemp -d)
+node "$inst" --guard | grep -q "response-guard.mjs" || { echo "FAIL: --guard did not reference response-guard.mjs"; exit 1; }
+node "$inst" --write "$(win "$t")" >/dev/null                 # default stop hook
+node "$inst" --guard --write "$(win "$t")" >/dev/null         # guard hook
+grep -q "stop-hook.mjs" "$t/.claude/settings.json" || { echo "FAIL: default hook missing"; exit 1; }
+grep -q "response-guard.mjs" "$t/.claude/settings.json" || { echo "FAIL: guard hook missing"; exit 1; }
+node "$inst" --guard --write "$(win "$t")" | grep -q "already present" || { echo "FAIL: guard not idempotent"; exit 1; }
+echo "ok: --guard installs response-guard.mjs and coexists with the default hook"
+
 echo "ALL PASS"
