@@ -42,8 +42,10 @@ requires a result block (`data type · weakest number first · n · what this do
 numbers before reporting, a release gate (an unseen number and a real-use measurement before publishing), and a
 research gate ("what was cracked + evidence" or an explicit "nothing new"). <!-- levelwith-allow: lists trigger words below -->
 The mechanical part, `scripts/levelwith-lint.mjs <file>`, flags the words novel/best/cracked/breakthrough/production-grade <!-- levelwith-allow: lists the trigger words as examples -->
-unless a citation and a number are on the same line, and flags a results file missing the honesty block; it exits
-non-zero so it can be a `.levelwith` gate. Fenced code and lines marked `levelwith-allow` are exempt (the exemption is
+unless a citation and a number are on the same line; flags a **capability label** (ai-scored/ai-native/agentic/self-learning) <!-- levelwith-allow: lists the capability words as examples -->
+unless a **mechanism pointer** — a code path, file, or `CHECK:` — is on the same line, because a number proves a <!-- levelwith-allow -->
+measurement, not a mechanism (this is the gap that let a lexical string-matcher be reported as "AI-scored"); and flags <!-- levelwith-allow -->
+a results file missing the honesty block; it exits non-zero so it can be a `.levelwith` gate. Fenced code and lines marked `levelwith-allow` are exempt (the exemption is
 visible in the diff). Templates are in `templates/`. Same honest limit as Part 1: it checks form and words, not truth.
 
 ### The Stop hook (enforce, not just advise)
@@ -120,16 +122,18 @@ these rows as solved.
 | G4 | Unverified assertion | **completion-gate**: a claimed outcome needs a passing `CHECK` | **Mechanical** (for what a command can test) |
 | G5 | Padding | `--report` self-review question | Human-judged — checks it's answered, not that it's true |
 | G6 | Premature finality | push-gate/CI block red; release-gate asks for an unseen + real-use number | Mixed — red is mechanical, the "ready" bar is human-judged |
-| G7 | Goal drift | `--report` self-review question | Human-judged |
-| G8 | Imitation over understanding | `novel/cracked` flagged without a prior-art cite; research-gate wants mechanism-or-"nothing new" | Visible |
+| G7 | Goal drift | `--report` self-review question, incl. a required **center-vs-substrate** answer (which core gate's status moved, or "substrate only") | Human-judged — catches "did I ship" replacing "is this the thing", but can't judge the answer |
+| G8 | Imitation over understanding | `novel/cracked` flagged without a prior-art cite; a **capability label** flagged without a mechanism pointer; research-gate wants mechanism-or-"nothing new"; GATES.md can grep the active code path | Visible lexically; **mechanical** only when a GATES.md `CHECK` greps the live path |
 | G9 | Corner-cutting | **completion-gate**: each part is a gate; "done" = all MET, not a surface claim | **Mechanical** (to the extent gates enumerate the parts) |
 | G10 | Operational carelessness | **push-gate blocks red; CI re-runs server-side** | **Mechanical — strongest** |
 | G11 | Reactive honesty | `--report` self-review question | Human-judged |
 | G12 | Compounded harm | `--report` "what decision rests on this" question | Human-judged |
 
 Three of the twelve (G4, G9, G10) are genuinely mechanical; four more are made visible; the rest are required-but-human
-(G5, G7, G11, G12, and half of G6). Nothing here verifies truth — only form and runnable checks. That boundary is the
-point, not a gap to paper over.
+(G5, G7, G11, G12, and half of G6). G8 gained a capability-label check: lexical by default (a label without a mechanism
+pointer is flagged), and mechanical only when a project writes a GATES.md `CHECK` that greps its active code path — the
+one way to prove a label like "AI-scored" is earned and not a lexical stub. <!-- levelwith-allow: names the example label --> Nothing here verifies truth on its own —
+only form and runnable checks. That boundary is the point, not a gap to paper over.
 
 ## Install as a Claude Code skill
 

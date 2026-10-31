@@ -27,6 +27,13 @@ lint_line 1 "This is the best detector available." || { echo "FAIL: bare 'best' 
 lint_line 0 "Follow best practices; this is best-effort and at best partial." || { echo "FAIL: 'best' idioms were flagged"; exit 1; }
 echo "ok: bare 'best' is flagged, idioms are not"
 
+# capability claims ("what the code does") need a MECHANISM pointer, not a citation+number
+lint_line 1 "The result is ai-scored." || { echo "FAIL: bare 'ai-scored' was not flagged"; exit 1; }
+lint_line 1 "An ai-native platform with recall 0.99 [1]." || { echo "FAIL: a number falsely backed a capability claim"; exit 1; }
+lint_line 0 "ai-scored by \`model.generate()\` in service.py:267." || { echo "FAIL: a mechanism pointer did not satisfy a capability claim"; exit 1; }
+lint_line 0 "The agentic loop is gated by GATES.md." || { echo "FAIL: a CHECK/gate pointer did not satisfy a capability claim"; exit 1; }
+echo "ok: capability claims need a mechanism pointer, not a number"
+
 # --report mode: the self-review questions must be present AND answered
 body="# R
 Weakest first: recall 0.23 (data type: unseen, n=10). What this does NOT show: not adaptive."
@@ -34,7 +41,8 @@ rev="## Honest self-review
 - Padding? no
 - Tied to the goal? yes
 - Limits disclosed proactively? yes
-- What decision will rest on this? the pilot go/no-go"
+- What decision will rest on this? the pilot go/no-go
+- Center vs substrate? substrate only, center still empty"
 
 t=$(mktemp); printf '%s\n' "$body" > "$t"   # no self-review block
 if node scripts/levelwith-lint.mjs "$t" --report >/dev/null 2>&1; then

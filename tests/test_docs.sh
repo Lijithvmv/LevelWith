@@ -21,4 +21,13 @@ for w in novel best cracked breakthrough production-grade state-of-the-art promi
 done
 echo "ok: every inflation word the docs promise is flagged"
 
+# every capability word the docs promise to flag must be flagged on a bare line (no mechanism pointer)
+for w in ai-scored ai-native ai-powered ai-driven agentic self-learning; do
+  t=$(mktemp); printf 'The system is %s.\n' "$w" > "$t"
+  if node scripts/levelwith-lint.mjs "$t" >/dev/null 2>&1; then
+    echo "FAIL: docs promise capability word '$w' is flagged, but the linter passed it"; exit 1
+  fi
+done
+echo "ok: every capability word the docs promise is flagged"
+
 echo "ALL PASS"
